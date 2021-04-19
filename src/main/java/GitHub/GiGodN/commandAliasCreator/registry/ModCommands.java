@@ -3,6 +3,8 @@ package GitHub.GiGodN.commandAliasCreator.registry;
 import GitHub.GiGodN.commandAliasCreator.CommandManagerExt;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
@@ -18,7 +20,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
 
 import static com.mojang.brigadier.arguments.StringArgumentType.*;
 import static net.minecraft.server.command.CommandManager.argument;
@@ -37,6 +41,7 @@ public class ModCommands {
                     .executes(context -> (updateCommands(context, getString(context, "commandName"), getString(context, "command"))))))
             .then(literal("remove")
                 .then(argument("commandName", word())
+                    .suggests((context, builder) -> (commandNames(context, builder)))
                     .executes(context -> (removeCommand(getString(context, "commandName"), context)))))
             .then(literal("help").executes(context -> (help(context))))
             .then(literal("list").executes(context -> (listCommand(context))))
@@ -56,6 +61,15 @@ public class ModCommands {
             return;
         });
         registerCommands();
+    }
+
+    private static CompletableFuture<Suggestions> commandNames(CommandContext<ServerCommandSource> ctx, SuggestionsBuilder builder) {
+        for (String commandName : commandMap.keySet()) {
+            String[] words = ctx.getInput().split(" ");
+            if(ctx.getInput().charAt(ctx.getInput().length()-1) != ' ' & !commandName.contains(words[words.length-1])) continue;
+            builder.suggest(commandName);
+        }
+        return builder.buildFuture();
     }
 
     private static int listCommand(CommandContext<ServerCommandSource> ctx) {
