@@ -37,13 +37,10 @@ public class ModCommands {
                     .executes(context -> (updateCommands(context, getString(context, "commandName"), getString(context, "command"))))))
             .then(literal("remove")
                 .then(argument("commandName", word())
-                    .executes(context -> (removeCommand(getString(context, "commandName"), context))))))
-        );
-    }
-
-    public static int execute(CommandContext<ServerCommandSource> ctx, String command) {
-        ctx.getSource().getMinecraftServer().getCommandManager().execute(ctx.getSource(), command);
-        return 1;
+                    .executes(context -> (removeCommand(getString(context, "commandName"), context)))))
+            .then(literal("help").executes(context -> (help(context))))
+            .then(literal("list").executes(context -> (listCommand(context))))
+        ));
     }
 
     public static void buildServer() {
@@ -61,8 +58,25 @@ public class ModCommands {
         registerCommands();
     }
 
+    private static int listCommand(CommandContext<ServerCommandSource> ctx) {
+        ctx.getSource().sendFeedback(new LiteralText("list of current active commands"), false);
+        commandMap.forEach((commandKey, commandExec) -> {
+            ctx.getSource().sendFeedback(new LiteralText(commandKey + " executes: " + commandExec), false);
+        });
+        return 1;
+    }
+
+    private static int execute(CommandContext<ServerCommandSource> ctx, String command) {
+        ctx.getSource().getMinecraftServer().getCommandManager().execute(ctx.getSource(), command);
+        return 1;
+    }
+
     private static int help(CommandContext<ServerCommandSource> ctx) {
-        ctx.getSource().sendFeedback(new LiteralText("Deffault Help Message"), false);
+        ctx.getSource().sendFeedback(new LiteralText("/alias displays the help text \n" +
+                "/alias CommandName Command will create a command that exicutes the command. can be called with /CommandName. \n" +
+                "/alias remove CommandName will remove the command from the commands list. \n" +
+                "/alias help displays the same help text as the argumentless command. \n" +
+                "/alias list lists all of the avilible commands. "), false);
         return 1;
     }
 
